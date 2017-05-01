@@ -11,9 +11,9 @@
 float DATA_BUFFER[MAX_BUFFER] = {0};
 float X_REG[3] = {0};
 float Y_REG[2] = {0};
-int n = 0;
-int nx = 0;
-int ny = 0;
+uint16_t n = 0;
+uint8_t nx = 0;
+uint8_t ny = 0;
 float mod_sample = 0.0;
 float query_sample = 0.0;
 float y_n;
@@ -28,14 +28,17 @@ DSP_Chorus_SF_Params_Type DSP_Chorus_SF_Params = {
 };
 
 DSP_Tremolo_SF_Params_Type DSP_Tremolo_SF_Params = {
-		15, 0.5, 0
+		20, 0.5, 0
+};
+
+DSP_Ring_Mod_SF_Params_Type DSP_Ring_Mod_SF_Params = {
+		440, 0
 };
 
 void DSP_task (){
 	/*Valor leído por ADC, es x_n **/
-	x_n = ADC_data - 0x160;
-	DSP_Chorus_SF();
-	DSP_LF();
+	x_n = ADC_data - 0x155;
+	DSP_Ring_Mod_SF();
 }
 
 void DSP_Chorus_SF(){
@@ -49,6 +52,11 @@ void DSP_Chorus_SF(){
 
 	n = (n >= MAX_BUFFER)?(0):(n + 1);
 
+	if(n == MAX_BUFFER)
+	{
+		int aux = 0;
+	}
+
 }
 
 void DSP_LF(){
@@ -58,12 +66,17 @@ void DSP_LF(){
 	X_REG[nx] = y_n;
 	Y_REG[ny] = y_n_filtered;
 
-	nx = (nx >= 3)?(0):(nx + 1);
-	ny = (ny >= 2)?(0):(ny + 1);
+	nx = (nx >= 2)?(0):(nx + 1);
+	ny = (ny >= 1)?(0):(ny + 1);
 
 }
 
 void DSP_Tremolo_SF(){
-	y_n = x_n * (1 + DSP_Tremolo_SF_Params.alpha*sin(2*PI*DSP_Tremolo_SF_Params.index*DSP_Tremolo_SF_Params.rate*SAMPLE_PERIOD));
-	DSP_Tremolo_SF_Params.index = (DSP_Tremolo_SF_Params.index >= TREMOLO_INDEX_MAX)?(0):(DSP_Tremolo_SF_Params.index + 1);
+	y_n = x_n * (1 + DSP_Tremolo_SF_Params.alpha*sin(2*PI*DSP_Tremolo_SF_Params.index*DSP_Tremolo_SF_Params.rate*SAMPLE_PERIOD + PI/2));
+	DSP_Tremolo_SF_Params.index++;
+}
+
+void DSP_Ring_Mod_SF(){
+	y_n = x_n * (sin(2*PI*DSP_Ring_Mod_SF_Params.index*DSP_Ring_Mod_SF_Params.rate*SAMPLE_PERIOD));
+	DSP_Ring_Mod_SF_Params.index++;
 }

@@ -46,8 +46,8 @@ void ADC_Convertion_task()
 	{
 
 		/*Mientras no haya pasado el periodo de muestreo, detenerse**/
-		//while(ADC_Sampling_Flag == false);
-		//ADC_Sampling_Flag = false;
+		while(ADC_Sampling_Flag == false);
+		ADC_Sampling_Flag = false;
 
 		/*Empezar conversión y esperar a que termine**/
 		ADC16_SetChannelConfig(ADC0, 0, &adc16ChannelConfigStruct);

@@ -7,6 +7,7 @@
 
 #include "DAC_output_process.h"
 
+extern float y_n;
 extern float y_n_filtered;
 uint16_t DAC_data;
 
@@ -23,5 +24,5 @@ void DAC_output_process_init(){
 
 void DAC_output_task(){
 		/*Sacar valor por DAC**/
-		DAC_SetBufferValue(DAC0, 0U, (uint16_t)(y_n_filtered + 2045));
+		DAC_SetBufferValue(DAC0, 0U, (uint16_t)(y_n + 2045));
 }

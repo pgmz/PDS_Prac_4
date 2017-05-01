@@ -37,11 +37,18 @@ typedef struct{
 typedef struct{
 	float rate;
 	float alpha;
-	uint8_t index;
+	uint32_t index;
 }DSP_Tremolo_SF_Params_Type;
+
+typedef struct{
+	float rate;
+	uint32_t index;
+}DSP_Ring_Mod_SF_Params_Type;
 
 void DSP_task ();
 void DSP_Chorus_SF();
 void DSP_LF();
+void DSP_Tremolo_SF();
+void DSP_Ring_Mod_SF();
 
 #endif /* SOURCE_DIGITAL_SIGNAL_PROCESSING_H_ */
