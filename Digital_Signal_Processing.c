@@ -27,6 +27,10 @@ DSP_Chorus_SF_Params_Type DSP_Chorus_SF_Params = {
 		0.013, 0.003, 1, 0.7, 0.4
 };
 
+DSP_Tremolo_SF_Params_Type DSP_Tremolo_SF_Params = {
+		15, 0.5, 0
+};
+
 void DSP_task (){
 	/*Valor leído por ADC, es x_n **/
 	x_n = ADC_data - 0x160;
@@ -36,7 +40,7 @@ void DSP_task (){
 
 void DSP_Chorus_SF(){
 	mod_sample = (int)(DSP_Chorus_SF_Params.modulation_depth * SAMPLE_RATE + 0.5);
-	mod_sample = mod_sample * sin(2 * PI * DSP_Chorus_SF_Params.modulation_rate * (1/SAMPLE_RATE) * n);
+	mod_sample = mod_sample * sin(2 * PI * DSP_Chorus_SF_Params.modulation_rate * SAMPLE_PERIOD * n);
 	mod_sample = mod_sample + (int)(DSP_Chorus_SF_Params.delay_length * SAMPLE_RATE + 0.5);
 	query_sample = mod_sample - (int)(mod_sample);
 	y_n = DATA_BUFFER[(int)(mod_sample)] + (DATA_BUFFER[(int)(mod_sample + 0.9)] - DATA_BUFFER[(int)(mod_sample)])*query_sample;
@@ -57,4 +61,9 @@ void DSP_LF(){
 	nx = (nx >= 3)?(0):(nx + 1);
 	ny = (ny >= 2)?(0):(ny + 1);
 
+}
+
+void DSP_Tremolo_SF(){
+	y_n = x_n * (1 + DSP_Tremolo_SF_Params.alpha*sin(2*PI*DSP_Tremolo_SF_Params.index*DSP_Tremolo_SF_Params.rate*SAMPLE_PERIOD));
+	DSP_Tremolo_SF_Params.index = (DSP_Tremolo_SF_Params.index >= TREMOLO_INDEX_MAX)?(0):(DSP_Tremolo_SF_Params.index + 1);
 }
