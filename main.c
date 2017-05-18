@@ -41,6 +41,7 @@
 #include "ADC_input_process.h"
 #include "DAC_output_process.h"
 #include "External_mod_process.h"
+#include "UART_mod_process.h"
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
@@ -79,7 +80,7 @@ int main(void) {
   ADC_input_process_init();
   DAC_output_process_init();
   External_mod_process_init();
-
+  UART_mod_process_init();
   /*Empezar timer del PIT*/
   PIT_sample_frec_start();
 

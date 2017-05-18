@@ -9,8 +9,9 @@
 #include <math.h>
 
 float DATA_BUFFER[MAX_BUFFER] = {0};
-float X_REG[3] = {0};
-float Y_REG[2] = {0};
+float Xkm = 0.0, Xkm1 = 0.0, Xkm2 = 0.0,
+		Ykm = 0.0, Ykm1 = 0.0, Ykm2 = 0.0,
+			Xkm_ = 0.0;
 uint16_t n = 0;
 uint8_t nx = 0;
 uint8_t ny = 0;
@@ -20,25 +21,43 @@ float y_n;
 float y_n_filtered;
 float x_n;
 
-
 extern float ADC_data;
+extern float *DSP_Ring_Mod_SF_Rate;
 
+extern float *Effect_Amplitude;
+extern float *Effect_Alpha;
+extern float *Effect_Rate;
+
+void DSP_task (){
+	/*Valor leído por ADC, es x_n **/
+	Xkm = ADC_data - 0x3be;
+	DSP_Tremolo_SF();
+}
+
+void DSP_Tremolo_SF(){
+	y_n = Xkm * (1 +
+			(*Effect_Alpha)*sin(2*PI*(n)*(*Effect_Rate)*SAMPLE_PERIOD + PI/2));
+	y_n = y_n * (*Effect_Amplitude);
+	n++;
+}
+
+
+#if 0
 DSP_Chorus_SF_Params_Type DSP_Chorus_SF_Params = {
 		0.013, 0.003, 1, 0.7, 0.4
 };
 
 DSP_Tremolo_SF_Params_Type DSP_Tremolo_SF_Params = {
-		20, 0.5, 0
+		20, 0.9, 0
 };
 
 DSP_Ring_Mod_SF_Params_Type DSP_Ring_Mod_SF_Params = {
-		440, 0
+		20, 0
 };
 
-void DSP_task (){
-	/*Valor leído por ADC, es x_n **/
-	x_n = ADC_data - 0x155;
-	DSP_Ring_Mod_SF();
+void DSP_Ring_Mod_SF(){
+	y_n = Xkm * (sin(2*PI*DSP_Ring_Mod_SF_Params.index*(DSP_Ring_Mod_SF_Params.rate)*SAMPLE_PERIOD));
+	DSP_Ring_Mod_SF_Params.index++;
 }
 
 void DSP_Chorus_SF(){
@@ -48,7 +67,7 @@ void DSP_Chorus_SF(){
 	query_sample = mod_sample - (int)(mod_sample);
 	y_n = DATA_BUFFER[(int)(mod_sample)] + (DATA_BUFFER[(int)(mod_sample + 0.9)] - DATA_BUFFER[(int)(mod_sample)])*query_sample;
 
-	DATA_BUFFER[n] = y_n*DSP_Chorus_SF_Params.feedback + x_n;
+	DATA_BUFFER[n] = y_n*DSP_Chorus_SF_Params.feedback + Xkm;
 
 	n = (n >= MAX_BUFFER)?(0):(n + 1);
 
@@ -61,22 +80,12 @@ void DSP_Chorus_SF(){
 
 void DSP_LF(){
 
-	y_n_filtered = Y_REG[ny]*1.5573 - Y_REG[(ny == 1)?(0):(1)]*0.6275 + X_REG[nx]*0.9037 - X_REG[(nx == 0)?(1):((nx == 1)?(2):(0))]*1.5669 + X_REG[(nx == 0)?(2):((nx == 1)?(0):(1))]*0.6785;
+	y_n = Xkm*0.97503 - Xkm1*1.8509 + Xkm2*0.87794 + Ykm1*1.84951 - Ykm2*0.85506;
 
-	X_REG[nx] = y_n;
-	Y_REG[ny] = y_n_filtered;
-
-	nx = (nx >= 2)?(0):(nx + 1);
-	ny = (ny >= 1)?(0):(ny + 1);
+	Ykm2 = Ykm1;
+	Ykm1 = y_n;
+	Xkm2 = Xkm1;
+	Xkm1 = Xkm;
 
 }
-
-void DSP_Tremolo_SF(){
-	y_n = x_n * (1 + DSP_Tremolo_SF_Params.alpha*sin(2*PI*DSP_Tremolo_SF_Params.index*DSP_Tremolo_SF_Params.rate*SAMPLE_PERIOD + PI/2));
-	DSP_Tremolo_SF_Params.index++;
-}
-
-void DSP_Ring_Mod_SF(){
-	y_n = x_n * (sin(2*PI*DSP_Ring_Mod_SF_Params.index*DSP_Ring_Mod_SF_Params.rate*SAMPLE_PERIOD));
-	DSP_Ring_Mod_SF_Params.index++;
-}
+#endif

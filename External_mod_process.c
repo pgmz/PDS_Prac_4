@@ -9,20 +9,17 @@
 
 uint32_t PORTC_INT_FLAGS;
 
-Mod_State_type Current_state = R_PARAM;
-
-/*Maquina de estados*/
-static Mod_SM_type Mod_SM[4] = {
-		{R_PARAM, A_PARAM, 200, R_PARAM_MIN, R_PARAM_MAX, R_PARAM_MIN,&Modify_amplitude, false, false, true},
-		{A_PARAM, AMP_PARAM, 0.8, A_PARAM_MIN, A_PARAM_MAX, A_PARAM_MIN,&Modify_amplitude, true, false, false},
-		{AMP_PARAM, R_PARAM, 1, AMP_PARAM_MIN, AMP_PARAM_MAX, AMP_PARAM_MIN,&Modify_amplitude, false, false, false}
+Mod_SM_type Mod_SM[3] = {
+		{TREMOLO_RATE, TREMOLO_ALPHA, 20, TREMOLO_RATE_INC, TREMOLO_RATE_MAX, TREMOLO_RATE_MIN, true, true, false},
+		{TREMOLO_ALPHA, AMP_PARAM, 0.5, TREMOLO_ALPHA_INC, TREMOLO_ALPHA_MAX, TREMOLO_ALPHA_MIN, false, true, true},
+		{AMP_PARAM, TREMOLO_RATE, 1, AMP_PARAM_INC, AMP_PARAM_MAX, AMP_PARAM_MIN, true, false, true}
 };
 
+float *Effect_Rate = &Mod_SM[TREMOLO_RATE].Modifier;
+float *Effect_Alpha = &Mod_SM[TREMOLO_ALPHA].Modifier;
+float *Effect_Amplitude = &Mod_SM[AMP_PARAM].Modifier;
 
-/*Donde están los valores que modifican el sistema**/
-float *R_param = &Mod_SM[R_PARAM].Modifier;
-float *A_param =  &Mod_SM[A_PARAM].Modifier;
-float *Amp_param =  &Mod_SM[AMP_PARAM].Modifier;
+Mod_State_type Current_state = TREMOLO_RATE;
 
 void External_mod_process_init(){
 
@@ -49,10 +46,6 @@ void External_mod_process_init(){
 		PORT_SetPinConfig(PORTC, 5U, &config);
 		PORT_SetPinConfig(PORTC, 7U, &config);
 		PORT_SetPinConfig(PORTC, 0U, &config);
-		PORT_SetPinConfig(PORTC, 9U, &config);
-		PORT_SetPinConfig(PORTC, 8U, &config);
-		PORT_SetPinConfig(PORTC, 1U, &config);
-
 
 		NVIC_SetPriority(PORTC_IRQn, 7);
 		NVIC_EnableIRQ(PORTC_IRQn);
@@ -66,15 +59,6 @@ void External_mod_process_init(){
 
 		PORT_SetPinInterruptConfig(PORTC, 0U, kPORT_InterruptRisingEdge);
 		GPIO_PinInit(GPIOC, 0U, &config_gpio);
-
-		PORT_SetPinInterruptConfig(PORTC, 9U, kPORT_InterruptRisingEdge);
-		GPIO_PinInit(GPIOC, 9U, &config_gpio);
-
-		PORT_SetPinInterruptConfig(PORTC, 8U, kPORT_InterruptRisingEdge);
-		GPIO_PinInit(GPIOC, 8U, &config_gpio);
-
-		PORT_SetPinInterruptConfig(PORTC, 1U, kPORT_InterruptRisingEdge);
-		GPIO_PinInit(GPIOC, 1U, &config_gpio);
 
 		gpio_pin_config_t config_led =
 		{
@@ -125,7 +109,7 @@ void PORTC_IRQHandler(){
 
 	/*Cambiar estado y actualizar LEDS**/
 	switch(PORTC_INT_FLAGS){
-	case 1<<7U:
+	case 1<<5U:
 			Current_state = Mod_SM[Current_state].Mod_Next;
 			GPIO_WritePinOutput(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, Mod_SM[Current_state].led1);
 			GPIO_WritePinOutput(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, Mod_SM[Current_state].led2);
@@ -133,13 +117,13 @@ void PORTC_IRQHandler(){
 		    break;
 
     /*Incrementar de acuerdo al estado**/
-	case 1<<0U:
-			Mod_SM[Current_state].ftpr(true);
+	case 1<<7U:
+			Modify_amplitude(true);
 			break;
 
 	/*Decrementar de acuerdo al estado**/
-	case 1<<9U:
-			Mod_SM[Current_state].ftpr(false);
+	case 1<<0U:
+			Modify_amplitude(false);
 			break;
 	}
 

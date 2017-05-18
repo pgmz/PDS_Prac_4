@@ -24,5 +24,5 @@ void DAC_output_process_init(){
 
 void DAC_output_task(){
 		/*Sacar valor por DAC**/
-		DAC_SetBufferValue(DAC0, 0U, (uint16_t)(y_n + 2045));
+		DAC_SetBufferValue(DAC0, 0U, (uint16_t)(y_n/2 + 2045));
 }
